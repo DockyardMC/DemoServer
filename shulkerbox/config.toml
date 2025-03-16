@@ -1,0 +1,8 @@
+[Youkai]
+    youkaiIntegrationEnabled = false
+
+[Git]
+    gitIntegrationEnabled = false
+    gitUrl = ""
+    gitUser = ""
+    gitPassword = ""
