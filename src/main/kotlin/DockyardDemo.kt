@@ -27,9 +27,10 @@ object DockyardDemo {
 
         customBiome = customBiome("dockyarddemo:game") {
             withParticles(BiomeParticles(ParticleOptions(Particles.ASH.identifier), 0.01f))
-            withSkyColor("#9234eb")
+            withSkyColor("#8034eb")
             withFoliageColor("#547053")
             withGrassColor("#547053")
+            withFogColor("#633000")
         }
         BiomeRegistry.addEntry(customBiome, true)
 
@@ -37,6 +38,7 @@ object DockyardDemo {
 
         ShulkerboxIntegration.load()
         HubInstance
+        GameManager
 
         Events.on<PlayerSpawnEvent> { event ->
             event.world = HubInstance.world

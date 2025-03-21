@@ -35,7 +35,8 @@ object HubInstance {
 
     private val bossbar = Bossbar("<aqua>https://github.com/DockyardMC/Dockyard", 1f, BossbarColor.BLUE, BossbarNotches.NO_NOTCHES)
 
-    private val sidebar = Sidebar("<aqua><bold>DockyardMC Demo") {
+    private val sidebar = Sidebar {
+        setTitle("<aqua><bold>DockyardMC Demo")
         setGlobalLine("                               ")
         setPlayerLine { player -> " Player: <cyan>$player" }
         setGlobalLine(" players online")
@@ -65,18 +66,19 @@ object HubInstance {
             this.world = world
 
             world.freezeTime = true
-            world.time.value = 12000
+            world.time.value = 13000
 
             map = MapFileReader.read(File("./demo_map.shulker")).toDockyardMap(world.locationAt(0, 100, 0))
             map.placeSchematicAsync().thenAccept {
                 spawn = map.getPoint("spawn").location
                 center = map.getPoint("center").location
                 world.defaultSpawnLocation = spawn
+                map.spawnProps()
             }
 
             eventPool = EventPool.withFilter("hub-world-filter", EventFilter.containsWorld(HubInstance.world))
 
-            eventPool.on<WorldTickEvent> { event ->
+            eventPool.on<WorldTickEvent> { _ ->
                 sidebar.setGlobalLine(14, " Online: <cyan>${PlayerManager.players.size}/25")
                 sidebar.setGlobalLine(12, " Memory Usage: <lime>${ServerMetrics.memoryUsageTruncated}mb")
                 sidebar.setGlobalLine(11, " MSPT (world): <yellow>${world.scheduler.mspt}ms")
@@ -95,7 +97,9 @@ object HubInstance {
         player.canFly.value = false
         player.health.value = 20f
         player.food.value = 20.0
-        player.addPotionEffect(PotionEffects.NIGHT_VISION, 9999999, 1, showParticles = false, showBlueBorder = false, showIconOnHud = false)
+        player.addPotionEffect(PotionEffects.NIGHT_VISION, -1, 1, showParticles = false, showBlueBorder = false, showIconOnHud = false)
+        player.addPotionEffect(PotionEffects.HUNGER, -1, 1, showParticles = false, showBlueBorder = false, showIconOnHud = false)
+        player.addPotionEffect(PotionEffects.WITHER, -1, 1, showParticles = false, showBlueBorder = false, showIconOnHud = false)
         bossbar.addViewer(player)
         sidebar.viewers.add(player)
         tablist.addViewer(player)
