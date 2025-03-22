@@ -4,21 +4,22 @@ import cz.lukynka.bindables.Bindable
 import io.github.dockyard.demo.GameInstance
 import io.github.dockyardmc.entity.ai.goals.PlayAmbientNoiseAIGoal
 import io.github.dockyardmc.entity.ai.goals.RandomLookAroundAIGoal
-import io.github.dockyardmc.events.EntityDamageEvent
 import io.github.dockyardmc.location.Location
 import io.github.dockyardmc.registry.EntityTypes
 import io.github.dockyardmc.registry.Sounds
 import io.github.dockyardmc.registry.registries.EntityType
 import io.github.dockyardmc.sounds.Sound
-import io.github.dockyardmc.sounds.playSound
 
-class Zombie(location: Location, instance: GameInstance) : Monster(location, instance) {
+class Zombie(location: Location, instance: GameInstance) : Monster(location, instance, 3f) {
+
+    override fun getAmountOfMoney(): Int {
+        return 1
+    }
 
     override fun getDamageSound(): Sound {
         return Sound(Sounds.ENTITY_ZOMBIE_HURT)
     }
 
-    override var health: Bindable<Float> = bindablePool.provideBindable(3f * instance.monsterHealthMultiplier)
     override var type: EntityType = EntityTypes.ZOMBIE
 
     init {

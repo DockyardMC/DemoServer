@@ -2,28 +2,27 @@ package io.github.dockyard.demo
 
 import io.github.dockyard.demo.items.GameItem
 import io.github.dockyard.demo.items.ItemRegistry
-import io.github.dockyardmc.apis.hologram
-import io.github.dockyardmc.entity.*
+import io.github.dockyard.demo.shop.ShopItem
+import io.github.dockyardmc.entity.Entity
 import io.github.dockyardmc.entity.EntityManager.despawnEntity
 import io.github.dockyardmc.entity.EntityManager.spawnEntity
-import io.github.dockyardmc.particles.spawnParticle
-import io.github.dockyardmc.player.Player
-import io.github.dockyardmc.registry.Blocks
+import io.github.dockyardmc.entity.Interaction
+import io.github.dockyardmc.entity.ItemDisplay
+import io.github.dockyardmc.entity.TextDisplay
 import io.github.dockyardmc.registry.Items
-import io.github.dockyardmc.registry.Particles
-import io.github.dockyardmc.registry.Sounds
 import io.github.dockyardmc.runnables.ticks
 import io.github.dockyardmc.scheduler.runLaterAsync
-import io.github.dockyardmc.sounds.playSound
-import io.github.dockyardmc.utils.vectors.Vector3f
 import kotlin.reflect.full.primaryConstructor
 
 class Shop(val instance: GameInstance) {
 
     var itemsInStock = 0
+    val shopItems = mutableListOf<ShopItem>()
+
     val cleanupEntities = mutableListOf<Entity>()
 
     fun spawn() {
+        if(instance.state.value == GameInstance.State.SHOP_ACTIVE) return
         instance.state.value = GameInstance.State.SHOP_ACTIVE
 
         val items = mutableListOf<GameItem>()
@@ -31,6 +30,7 @@ class Shop(val instance: GameInstance) {
             items.add(ItemRegistry.items.random().primaryConstructor!!.call())
         }
 
+        spawnContinueButton()
 
         var i = 0
         itemsInStock = 3
@@ -40,59 +40,10 @@ class Shop(val instance: GameInstance) {
 
             val location = instance.map.getPoint("shop_$i").location
             val world = location.world
-            location.setBlock(Blocks.CHEST.withBlockStates("facing" to "north"))
-            world.playSound(Sounds.BLOCK_WOOD_PLACE, location)
-            world.scheduler.runLater(10.ticks) {
-                world.players.forEach { player -> player.playChestAnimation(location, Player.ChestAnimation.OPEN) }
-                world.playSound(Sounds.BLOCK_CHEST_OPEN, location)
-            }
 
-            spawnContinueButton()
-
-            world.scheduler.runLater(20.ticks) {
-                location.world.playSound(Sounds.BLOCK_END_PORTAL_FRAME_FILL, location, volume = 0.5f)
-                location.world.spawnParticle(location.add(0, 2, 0), Particles.FIREWORK, Vector3f(0f), speed = 0.2f, amount = 20)
-                location.world.spawnParticle(location.add(0, 2, 0), Particles.ENCHANTED_HIT, Vector3f(0f), speed = 0.2f, amount = 10)
-
-                val itemDisplay = instance.world.spawnEntity(ItemDisplay(location.add(0.0, 3.0 + offsetSize, 0.0), location.world)) as ItemDisplay
-                itemDisplay.item.value = item.getItemStack()
-                itemDisplay.billboard.value = DisplayBillboard.CENTER
-                itemDisplay.scaleTo(1.2f)
-
-                val interaction = world.spawnEntity(Interaction(location)) as Interaction
-                interaction.height.value = 5f
-                interaction.width.value = 3f
-
-                val holo = hologram(location.add(0.0, 2.0 + offsetSize, 0.0)) {
-                    val description = item.getDescription()
-                    withStaticLine("${item.getRarity().color}<b><u>${item.getName()}<r>")
-                    description.forEach { line ->
-                        withStaticLine(line)
-                    }
-                    withStaticLine(" ")
-                    withStaticLine("<yellow><b>></b> Buy for <gold>5$<yellow> <b><<")
-                }
-
-                cleanupEntities.add(interaction)
-                cleanupEntities.add(holo)
-                cleanupEntities.add(itemDisplay)
-
-                interaction.generalInteractionDispatcher.register { player ->
-                    if(!interaction.responsive.value) return@register
-                    itemsInStock--
-                    player.sendMessage("<yellow>bought ${item.getRarity().color}${item.getName()}<yellow>!")
-                    interaction.responsive.value = false
-                    world.despawnEntity(itemDisplay)
-                    world.despawnEntity(holo)
-                    world.players.forEach { loopPlayer -> loopPlayer.playChestAnimation(location, Player.ChestAnimation.CLOSE) }
-                    world.playSound(Sounds.BLOCK_CHEST_CLOSE, location)
-                    runLaterAsync(5.ticks) {
-                        world.despawnEntity(interaction)
-                    }
-                }
-
-                location.world.players.forEach { player -> holo.addViewer(player) }
-            }
+            val shopItem = ShopItem(location, item, instance)
+            shopItems.add(shopItem)
+            shopItem.spawn()
         }
     }
 
@@ -113,16 +64,16 @@ class Shop(val instance: GameInstance) {
         cleanupEntities.add(continueTextDisplay)
 
         continueInteraction.rightClickDispatcher.register { player ->
+            if(!continueInteraction.responsive.value) return@register
+            continueInteraction.responsive.value = false
             despawn()
         }
     }
 
     fun despawn() {
-        for (i in 1 until 4) {
-            val location = instance.map.getPoint("shop_$i").location
-            location.world.destroyNaturally(location)
-        }
-        runLaterAsync(1.ticks) {
+        shopItems.forEach { shopItem -> shopItem.despawn() }
+
+        runLaterAsync(10.ticks) {
             cleanupEntities.forEach { entity ->
                 instance.world.despawnEntity(entity)
             }

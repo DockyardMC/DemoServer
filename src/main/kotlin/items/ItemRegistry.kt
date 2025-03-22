@@ -15,6 +15,10 @@ object ItemRegistry {
         add(SweepingEdgeItem::class)
         add(RuneOfCrit::class)
         add(HealthyStewItem::class)
-        add(PikachusTailItem::class)
+//        add(PikachusTailItem::class)
+        add(TurtleShellItem::class)
+        add(SuperchardgedItem::class)
+        add(PiercingAxe::class)
+        add(BloodstainedSwordItem::class)
     }
 }

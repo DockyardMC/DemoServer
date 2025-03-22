@@ -1,9 +1,12 @@
 package io.github.dockyard.demo.monsters
 
+import cz.lukynka.bindables.Bindable
 import de.metaphoriker.pathetic.api.pathing.configuration.HeuristicWeights
 import de.metaphoriker.pathetic.api.pathing.filter.filters.PassablePathFilter
 import io.github.dockyard.demo.GameInstance
 import io.github.dockyardmc.entity.Entity
+import io.github.dockyardmc.entity.EntityManager.spawnEntity
+import io.github.dockyardmc.entity.ItemDropEntity
 import io.github.dockyardmc.entity.ai.AIManager
 import io.github.dockyardmc.events.EntityDamageEvent
 import io.github.dockyardmc.events.EntityNavigatorPickOffsetEvent
@@ -16,16 +19,20 @@ import io.github.dockyardmc.pathfinding.Pathfinder
 import io.github.dockyardmc.pathfinding.RequiredHeightPathfindingFilter
 import io.github.dockyardmc.player.Player
 import io.github.dockyardmc.registry.Blocks
+import io.github.dockyardmc.registry.Items
 import io.github.dockyardmc.registry.Sounds
 import io.github.dockyardmc.sounds.Sound
 import io.github.dockyardmc.sounds.playSound
 import io.github.dockyardmc.utils.randomFloat
 import io.github.dockyardmc.utils.vectors.Vector3f
 
-abstract class Monster(location: Location, instance: GameInstance) : Entity(location) {
+abstract class Monster(location: Location, instance: GameInstance, val maxHealth: Float) : Entity(location) {
 
+    override var health: Bindable<Float> = bindablePool.provideBindable(maxHealth * instance.monsterHealthMultiplier)
     val eventPool = EventPool().withFilter(EventFilter.containsWorld(location.world))
     override var inventorySize: Int = 0
+
+    abstract fun getAmountOfMoney(): Int
 
     private val pathfinder = Pathfinder.createPathfinder {
         async(true)
@@ -83,6 +90,12 @@ abstract class Monster(location: Location, instance: GameInstance) : Entity(loca
             if(this.isDead) return@register
             world.playSound(Sounds.ENTITY_ZOMBIE_STEP, this::location.call(), 0.5f, 1f)
         }
+    }
+
+    fun dropMoney() {
+        val item = world.spawnEntity(ItemDropEntity(location, Items.GOLD_INGOT.toItemStack())) as ItemDropEntity
+        item.pickupDistance = 5
+        item.canBePickedUpAfter = 7
     }
 
     override fun dispose() {

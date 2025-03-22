@@ -6,6 +6,14 @@ import io.github.dockyardmc.registry.registries.Item
 
 class AppleItem : GameItem() {
 
+    override fun maxCopiesInInventory(): Int {
+        return -1
+    }
+
+    override fun getShopPrice(): Int {
+        return 5
+    }
+
     override fun getItem(): Item {
         return Items.APPLE
     }

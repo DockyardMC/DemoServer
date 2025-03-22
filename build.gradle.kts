@@ -14,7 +14,7 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
-    implementation("io.github.dockyardmc:dockyard:0.8.9")
+    implementation("io.github.dockyardmc:dockyard:0.8.9.2-SNAPSHOT")
     implementation("cz.lukynka.shulkerbox:common:2.5")
     implementation("cz.lukynka.shulkerbox:dockyard:2.5")
 }

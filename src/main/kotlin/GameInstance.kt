@@ -50,10 +50,14 @@ class GameInstance(val player: Player) {
 
     var playerDamage: Float = 1f
     var playerCritRate: Int = 10
-    var playerCritDamage: Int = 5
+    var playerCritDamage: Int = 2
     var monsterSpeed: Int = 15
+    var playerDodge: Int = 0
     var monsterHealthMultiplier: Float = 1f
+    var shopPriceMultiplier: Float = 1f
     var playerMaxHealth: Bindable<Int> = bindablePool.provideBindable(6)
+
+    var money: Bindable<Int> = bindablePool.provideBindable(0)
 
     val controller = GameController(this)
     val shop = Shop(this)
@@ -97,6 +101,18 @@ class GameInstance(val player: Player) {
                 player.attributes[Attributes.MAX_HEALTH].base.value = playerMaxHealth.value.toDouble()
             }
 
+            money.valueChanged { event ->
+                val diff = event.oldValue - event.newValue
+                val diffString = if (diff > 0) {
+                    "-${diff}"
+                } else if (diff < 0) {
+                    "+${-diff}"
+                } else {
+                    "0"
+                }
+                player.sendActionBar("<gold>You have $${event.newValue} <yellow>($diffString)")
+            }
+
             world.time.value = 13000
         }
     }
@@ -133,7 +149,7 @@ class GameInstance(val player: Player) {
         }
 
         HubInstance.leave(player)
-        player.sendMessage("<gray>Joining instance $uuid")
+        player.sendMessage("<aqua><bold>Instance <dark_gray>● <gray>Joining instance <cyan>${uuid.substring(0, 8)}")
         player.teleport(spawn)
         player.clearInventory()
         player.clearPotionEffects()

@@ -16,6 +16,10 @@ abstract class GameItem {
         const val RARE = "<#70acff>"
     }
 
+    abstract fun maxCopiesInInventory(): Int
+
+    abstract fun getShopPrice(): Int
+
     abstract fun getItem(): Item
 
     abstract fun getRarity(): Rarity
@@ -27,6 +31,8 @@ abstract class GameItem {
     open val discardsAfterUse: Boolean = false
 
     open fun onObtain(gameInstance: GameInstance) {}
+
+    open fun onDiscarded(gameInstance: GameInstance) {}
 
     open fun onPlayerDeath(gameInstance: GameInstance) {}
 
