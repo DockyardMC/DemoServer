@@ -4,7 +4,7 @@ import io.github.dockyard.demo.GameInstance
 import io.github.dockyardmc.registry.Items
 import io.github.dockyardmc.registry.registries.Item
 
-class RuneOfCrit : GameItem() {
+class RuneOfCritRate : GameItem() {
 
     override fun maxCopiesInInventory(): Int {
         return 15
@@ -23,15 +23,15 @@ class RuneOfCrit : GameItem() {
     }
 
     override fun getName(): String {
-        return "Rune of Crit"
+        return "Rune of Uruz"
     }
 
     override fun onObtain(gameInstance: GameInstance) {
-        gameInstance.playerCritDamage -= 2
-        gameInstance.playerCritRate += 3
+        gameInstance.playerCritDamage.percentage -= 3
+        gameInstance.playerCritRate.percentage += 3
     }
 
     override fun getDescription(): List<String> {
-        return listOf("Crit Rate <lime>+3%<white> but Crit Damage <red>-2%")
+        return listOf("Crit Rate <lime>+3%<white> but Crit Damage <red>-3%")
     }
 }

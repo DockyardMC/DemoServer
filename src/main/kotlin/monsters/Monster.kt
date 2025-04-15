@@ -14,6 +14,8 @@ import io.github.dockyardmc.events.EventPool
 import io.github.dockyardmc.events.WorldTickEvent
 import io.github.dockyardmc.events.system.EventFilter
 import io.github.dockyardmc.location.Location
+import io.github.dockyardmc.maths.randomFloat
+import io.github.dockyardmc.maths.vectors.Vector3f
 import io.github.dockyardmc.pathfinding.Navigator
 import io.github.dockyardmc.pathfinding.Pathfinder
 import io.github.dockyardmc.pathfinding.RequiredHeightPathfindingFilter
@@ -23,12 +25,10 @@ import io.github.dockyardmc.registry.Items
 import io.github.dockyardmc.registry.Sounds
 import io.github.dockyardmc.sounds.Sound
 import io.github.dockyardmc.sounds.playSound
-import io.github.dockyardmc.utils.randomFloat
-import io.github.dockyardmc.utils.vectors.Vector3f
 
 abstract class Monster(location: Location, instance: GameInstance, val maxHealth: Float) : Entity(location) {
 
-    override var health: Bindable<Float> = bindablePool.provideBindable(maxHealth * instance.monsterHealthMultiplier)
+    override var health: Bindable<Float> = bindablePool.provideBindable(instance.monsterHealth.getValueOf(maxHealth))
     val eventPool = EventPool().withFilter(EventFilter.containsWorld(location.world))
     override var inventorySize: Int = 0
 
@@ -44,13 +44,18 @@ abstract class Monster(location: Location, instance: GameInstance, val maxHealth
 
     private val filters = listOf(PassablePathFilter(), RequiredHeightPathfindingFilter(2))
 
-    val navigator = Navigator(this, instance.monsterSpeed, pathfinder, filters)
+    val speedInMetersPerTick = calculateSpeed(instance.monsterSpeed.percentage)
+    val navigator = Navigator(this, speedInMetersPerTick.toInt(), pathfinder, filters)
     val brain = AIManager(this)
 
     var target: Player? = null
 
     fun getPlayerTarget(): Entity? {
         return target
+    }
+
+    private fun calculateSpeed(percentage: Double): Int {
+        return (-0.39 * percentage + 40).toInt()
     }
 
     abstract fun getDamageSound(): Sound
@@ -86,8 +91,8 @@ abstract class Monster(location: Location, instance: GameInstance, val maxHealth
             event.location = event.location.add(Vector3f(randomFloat(constraints, -constraints), 0f,randomFloat(constraints, -constraints)))
         }
 
-        navigator.navigationNodeStepDispatcher.register { _ ->
-            if(this.isDead) return@register
+        navigator.navigationNodeStepDispatcher.subscribe { _ ->
+            if(this.isDead) return@subscribe
             world.playSound(Sounds.ENTITY_ZOMBIE_STEP, this::location.call(), 0.5f, 1f)
         }
     }

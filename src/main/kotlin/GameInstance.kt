@@ -5,27 +5,27 @@ import cz.lukynka.bindables.BindablePool
 import cz.lukynka.shulkerbox.dockyard.DockyardMap
 import cz.lukynka.shulkerbox.dockyard.MapFileReader
 import cz.lukynka.shulkerbox.dockyard.conversion.toDockyardMap
-import io.github.dockyardmc.bossbar.Bossbar
-import io.github.dockyardmc.bossbar.BossbarColor
-import io.github.dockyardmc.bossbar.BossbarNotches
+import io.github.dockyardmc.apis.bossbar.Bossbar
+import io.github.dockyardmc.apis.bossbar.BossbarColor
+import io.github.dockyardmc.apis.bossbar.BossbarNotches
 import io.github.dockyardmc.events.EventPool
 import io.github.dockyardmc.events.system.EventFilter
-import io.github.dockyardmc.extentions.sendMessage
 import io.github.dockyardmc.inventory.clearInventory
 import io.github.dockyardmc.inventory.give
 import io.github.dockyardmc.item.ItemStack
 import io.github.dockyardmc.location.Location
+import io.github.dockyardmc.maths.Percentage
 import io.github.dockyardmc.player.Player
 import io.github.dockyardmc.player.systems.GameMode
-import io.github.dockyardmc.registry.*
-import io.github.dockyardmc.registry.registries.Attribute
-import io.github.dockyardmc.sounds.playSound
+import io.github.dockyardmc.registry.Attributes
+import io.github.dockyardmc.registry.DimensionTypes
+import io.github.dockyardmc.registry.Items
+import io.github.dockyardmc.registry.PotionEffects
 import io.github.dockyardmc.world.World
 import io.github.dockyardmc.world.WorldManager
 import io.github.dockyardmc.world.generators.VoidWorldGenerator
 import java.io.File
 import java.util.*
-import kotlin.time.Duration.Companion.seconds
 
 class GameInstance(val player: Player) {
 
@@ -49,11 +49,11 @@ class GameInstance(val player: Player) {
     private val bossbar = Bossbar("<aqua><bold>Loading!</b> <white>The game is loading..", 1f, BossbarColor.BLUE, BossbarNotches.NO_NOTCHES)
 
     var playerDamage: Float = 1f
-    var playerCritRate: Int = 10
-    var playerCritDamage: Int = 2
-    var monsterSpeed: Int = 15
-    var playerDodge: Int = 0
-    var monsterHealthMultiplier: Float = 1f
+    var playerCritRate: Percentage = Percentage(10.0)
+    var playerCritDamage: Percentage = Percentage(30.0)
+    var monsterSpeed: Percentage = Percentage(60.0)
+    var playerDodge: Percentage = Percentage(0.0)
+    var monsterHealth: Percentage = Percentage(100.0)
     var shopPriceMultiplier: Float = 1f
     var playerMaxHealth: Bindable<Int> = bindablePool.provideBindable(6)
 
@@ -63,6 +63,12 @@ class GameInstance(val player: Player) {
     val shop = Shop(this)
 
     init {
+        monsterHealth.min = 15.0
+        monsterSpeed.max = 100.0
+        playerCritDamage.min = 0.0
+        playerCritRate.min = 0.0
+        playerCritRate.max = 100.0
+
         WorldManager.createWithFuture("game_${player.username.lowercase()}_${uuid}", VoidWorldGenerator(DockyardDemo.customBiome), DimensionTypes.OVERWORLD).thenAccept { world ->
             this.world = world
 
@@ -157,7 +163,7 @@ class GameInstance(val player: Player) {
         player.experienceLevel.value = 0
         player.experienceBar.value = 0f
         player.canFly.value = false
-        player.health.value = 20f
+        player.health.value = playerMaxHealth.value.toFloat()
         player.food.value = 20.0
         player.give(sword)
         player.addPotionEffect(PotionEffects.NIGHT_VISION, -1, 1, showParticles = false, showBlueBorder = false, showIconOnHud = false)
@@ -190,6 +196,4 @@ class GameInstance(val player: Player) {
         GAME_PLAY,
         GAME_OVER
     }
-
-
 }

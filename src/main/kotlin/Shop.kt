@@ -10,8 +10,6 @@ import io.github.dockyardmc.entity.Interaction
 import io.github.dockyardmc.entity.ItemDisplay
 import io.github.dockyardmc.entity.TextDisplay
 import io.github.dockyardmc.registry.Items
-import io.github.dockyardmc.runnables.ticks
-import io.github.dockyardmc.scheduler.runLaterAsync
 import kotlin.reflect.full.primaryConstructor
 
 class Shop(val instance: GameInstance) {
@@ -22,7 +20,7 @@ class Shop(val instance: GameInstance) {
     val cleanupEntities = mutableListOf<Entity>()
 
     fun spawn() {
-        if(instance.state.value == GameInstance.State.SHOP_ACTIVE) return
+        if (instance.state.value == GameInstance.State.SHOP_ACTIVE) return
         instance.state.value = GameInstance.State.SHOP_ACTIVE
 
         val items = mutableListOf<GameItem>()
@@ -63,8 +61,8 @@ class Shop(val instance: GameInstance) {
         cleanupEntities.add(continueItemDisplay)
         cleanupEntities.add(continueTextDisplay)
 
-        continueInteraction.rightClickDispatcher.register { player ->
-            if(!continueInteraction.responsive.value) return@register
+        continueInteraction.rightClickDispatcher.subscribe { player ->
+            if (!continueInteraction.responsive.value) return@subscribe
             continueInteraction.responsive.value = false
             despawn()
         }
@@ -73,11 +71,10 @@ class Shop(val instance: GameInstance) {
     fun despawn() {
         shopItems.forEach { shopItem -> shopItem.despawn() }
 
-        runLaterAsync(10.ticks) {
-            cleanupEntities.forEach { entity ->
-                instance.world.despawnEntity(entity)
-            }
+        cleanupEntities.forEach { entity ->
+            instance.world.despawnEntity(entity)
         }
+
         instance.controller.startWave()
     }
 }

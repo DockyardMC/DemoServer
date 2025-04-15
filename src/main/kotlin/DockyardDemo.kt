@@ -12,7 +12,7 @@ import io.github.dockyardmc.registry.registries.BiomeParticles
 import io.github.dockyardmc.registry.registries.BiomeRegistry
 import io.github.dockyardmc.registry.registries.ParticleOptions
 import io.github.dockyardmc.scheduler.runLaterAsync
-import io.github.dockyardmc.utils.customBiome
+import io.github.dockyardmc.world.customBiome
 
 object DockyardDemo {
     lateinit var customBiome: Biome

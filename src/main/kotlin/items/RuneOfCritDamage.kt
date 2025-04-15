@@ -4,18 +4,18 @@ import io.github.dockyard.demo.GameInstance
 import io.github.dockyardmc.registry.Items
 import io.github.dockyardmc.registry.registries.Item
 
-class TurtleShellItem: GameItem() {
+class RuneOfCritDamage : GameItem() {
 
     override fun maxCopiesInInventory(): Int {
-        return 5
+        return 15
     }
 
     override fun getShopPrice(): Int {
-        return 25
+        return 10
     }
 
     override fun getItem(): Item {
-        return Items.TURTLE_HELMET
+        return Items.WAYFINDER_ARMOR_TRIM_SMITHING_TEMPLATE
     }
 
     override fun getRarity(): Rarity {
@@ -23,15 +23,15 @@ class TurtleShellItem: GameItem() {
     }
 
     override fun getName(): String {
-        return "Turtle Shell"
-    }
-
-    override fun getDescription(): List<String> {
-        return listOf("<green>+5% dodge chance<white> but <red>+5 monster speed")
+        return "Rune of Isa"
     }
 
     override fun onObtain(gameInstance: GameInstance) {
-        gameInstance.monsterSpeed.percentage += 5
-        gameInstance.playerDodge.percentage += 5
+        gameInstance.playerCritDamage.percentage += 3
+        gameInstance.playerCritRate.percentage -= 3
+    }
+
+    override fun getDescription(): List<String> {
+        return listOf("Crit Damage <lime>+3%<white> but Crit Rate <red>-3%")
     }
 }

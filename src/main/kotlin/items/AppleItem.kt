@@ -1,7 +1,10 @@
 package io.github.dockyard.demo.items
 
 import io.github.dockyard.demo.GameInstance
+import io.github.dockyardmc.maths.vectors.Vector3f
+import io.github.dockyardmc.particles.spawnParticle
 import io.github.dockyardmc.registry.Items
+import io.github.dockyardmc.registry.Particles
 import io.github.dockyardmc.registry.registries.Item
 
 class AppleItem : GameItem() {
@@ -33,6 +36,7 @@ class AppleItem : GameItem() {
     override val discardsAfterUse: Boolean = true
 
     override fun onObtain(gameInstance: GameInstance) {
-        gameInstance.player.health.value += 4
+        gameInstance.player.health.value += (4f.coerceAtLeast(gameInstance.playerMaxHealth.value.toFloat())).toInt()
+        gameInstance.world.spawnParticle(gameInstance.player.location, Particles.HEART, Vector3f(1f), amount = 10)
     }
 }

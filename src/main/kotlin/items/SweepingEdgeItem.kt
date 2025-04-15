@@ -3,6 +3,8 @@ package io.github.dockyard.demo.items
 import io.github.dockyard.demo.GameInstance
 import io.github.dockyard.demo.monsters.Monster
 import io.github.dockyardmc.entity.Entity
+import io.github.dockyardmc.maths.Percentage
+import io.github.dockyardmc.maths.vectors.Vector3d
 import io.github.dockyardmc.particles.spawnParticle
 import io.github.dockyardmc.player.Player
 import io.github.dockyardmc.registry.DamageTypes
@@ -11,7 +13,6 @@ import io.github.dockyardmc.registry.Particles
 import io.github.dockyardmc.registry.Sounds
 import io.github.dockyardmc.registry.registries.Item
 import io.github.dockyardmc.sounds.playSound
-import io.github.dockyardmc.utils.vectors.Vector3d
 
 class SweepingEdgeItem : GameItem() {
 
@@ -46,7 +47,7 @@ class SweepingEdgeItem : GameItem() {
         }
 
         nearEntities.forEach { entity ->
-            entity.damage(damage / 1.3f, DamageTypes.GENERIC, null)
+            entity.damage(Percentage(35.0).getValueOf(damage), DamageTypes.GENERIC, null)
         }
 
         monster.world.playSound(Sounds.ENTITY_PLAYER_ATTACK_SWEEP, monster.location)

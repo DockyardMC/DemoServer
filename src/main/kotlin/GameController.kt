@@ -3,23 +3,20 @@ package io.github.dockyard.demo
 import io.github.dockyard.demo.items.GameItem
 import io.github.dockyard.demo.monsters.Monster
 import io.github.dockyard.demo.monsters.Zombie
-import io.github.dockyardmc.entity.EntityManager
 import io.github.dockyardmc.entity.EntityManager.despawnEntity
 import io.github.dockyardmc.entity.EntityManager.spawnEntity
-import io.github.dockyardmc.entity.Interaction
 import io.github.dockyardmc.entity.ItemDisplay
 import io.github.dockyardmc.events.*
 import io.github.dockyardmc.extentions.sendPacket
 import io.github.dockyardmc.extentions.sendTitle
+import io.github.dockyardmc.maths.randomInt
+import io.github.dockyardmc.maths.vectors.Vector3d
 import io.github.dockyardmc.player.Player
 import io.github.dockyardmc.protocol.packets.play.clientbound.ClientboundPickupItemPacket
 import io.github.dockyardmc.registry.DamageTypes
 import io.github.dockyardmc.registry.Sounds
-import io.github.dockyardmc.runnables.ticks
+import io.github.dockyardmc.scheduler.runnables.ticks
 import io.github.dockyardmc.sounds.playSound
-import io.github.dockyardmc.utils.percentOf
-import io.github.dockyardmc.utils.randomInt
-import io.github.dockyardmc.utils.vectors.Vector3d
 import kotlin.reflect.KClass
 
 class GameController(val instance: GameInstance) {
@@ -74,13 +71,13 @@ class GameController(val instance: GameInstance) {
             }
             var damage = instance.playerDamage
             val chance = randomInt(0, 100)
-            if(chance <= instance.playerCritRate) {
-                val crit = percentOf(instance.playerCritDamage.toFloat(), instance.playerDamage.toDouble()).toFloat()
+            if (chance <= instance.playerCritRate.percentage) {
+                val crit = instance.playerCritDamage.getValueOf(instance.playerCritDamage.getValueOf(instance.playerDamage))
                 damage += crit
-                event.player.sendMessage("<red>crit for $crit dmg")
+                event.player.playSound(Sounds.ITEM_FLINTANDSTEEL_USE, 1f, 1.5f)
             }
 
-            event.entity.damage(instance.playerDamage, DamageTypes.GENERIC, event.player)
+            event.entity.damage(damage, DamageTypes.GENERIC, event.player)
         }
 
         pool.on<EntityDamageEvent> { event ->
@@ -91,7 +88,7 @@ class GameController(val instance: GameInstance) {
 
         pool.on<PlayerDamageEvent> { event ->
             val chance = randomInt(0, 100)
-            if(chance <= instance.playerDodge) {
+            if (chance <= instance.playerDodge.percentage) {
                 event.player.sendMessage("<gray>Dodged attack")
                 event.player.playSound(Sounds.ITEM_SHIELD_BLOCK)
                 event.cancel()
@@ -104,15 +101,15 @@ class GameController(val instance: GameInstance) {
         }
 
         pool.on<EntityDeathEvent> { event ->
-            if (event.entity is Player) return@on
-            if (event.entity is Interaction) return@on
+            if (event.entity.isDead) return@on
+            if (event.entity !is Monster) return@on
             items.forEach { item -> item.onMonsterDeath(event.entity, instance) }
             (event.entity as Monster).navigator.cancelNavigating()
             (event.entity as Monster).navigator.dispose()
             (event.entity as Monster).dropMoney()
 
             monstersRemaining--
-            if (monstersRemaining <= 0) {
+            if (monstersRemaining == 0) {
                 endWave()
             }
         }
@@ -136,9 +133,6 @@ class GameController(val instance: GameInstance) {
         pool.on<PlayerMoveEvent> { event ->
             if (instance.state.value != GameInstance.State.SHOP_ACTIVE) {
                 if (glowingEntities.isNotEmpty()) {
-                    glowingEntities.forEach { entity ->
-                        EntityManager.despawnEntity(entity)
-                    }
                     glowingEntities.clear()
                 }
                 return@on

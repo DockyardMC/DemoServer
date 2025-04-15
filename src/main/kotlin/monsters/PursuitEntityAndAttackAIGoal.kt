@@ -3,10 +3,12 @@ package io.github.dockyard.demo.monsters
 import de.metaphoriker.pathetic.api.pathing.result.PathfinderResult
 import io.github.dockyardmc.entity.Entity
 import io.github.dockyardmc.entity.ai.AIGoal
+import io.github.dockyardmc.extentions.broadcastMessage
 import io.github.dockyardmc.location.Location
 import io.github.dockyardmc.pathfinding.Navigator
+import io.github.dockyardmc.registry.DamageTypes
 
-class PursuitEntityAndAttackAIGoal(override var entity: Entity, override var priority: Int, val targetUnit: () -> Entity?, val navigator: Navigator): AIGoal() {
+class PursuitEntityAndAttackAIGoal(override var entity: Entity, override var priority: Int, val targetUnit: () -> Entity?, val navigator: Navigator, val damage: Float): AIGoal() {
 
     companion object {
         const val ATTACK_COOLDOWN = 20
@@ -31,8 +33,9 @@ class PursuitEntityAndAttackAIGoal(override var entity: Entity, override var pri
     override fun start() {
         hasFinishedWalking = false
 
-        pathfindResultListener = navigator.pathfindResultDispatcher.register { result ->
+        pathfindResultListener = navigator.pathfindResultDispatcher.subscribe { result ->
             if(result.hasFailed()) {
+                navigator.cancelNavigating()
                 fails++
                 if(fails >= PATH_UPDATE_FAIL_THRESHOLD) {
                     updateFrequency = PATH_UPDATE_PERIOD_IDLE
@@ -45,16 +48,16 @@ class PursuitEntityAndAttackAIGoal(override var entity: Entity, override var pri
             }
         }
 
-        pathfindingEndListener = navigator.navigationCompleteDispatcher.register {
+        pathfindingEndListener = navigator.navigationCompleteDispatcher.subscribe {
             hasFinishedWalking = true
         }
     }
 
     override fun end() {
         navigator.cancelNavigating()
-        pathfindResultListener?.let { listener -> navigator.pathfindResultDispatcher.unregister(listener) }
-        pathfindingEndListener?.let { listener -> navigator.navigationCompleteDispatcher.unregister(listener) }
-        pathfindingStepListener?.let { listener -> navigator.navigationNodeStepDispatcher.unregister(listener) }
+        pathfindResultListener?.let { listener -> navigator.pathfindResultDispatcher.unsubscribe(listener) }
+        pathfindingEndListener?.let { listener -> navigator.navigationCompleteDispatcher.unsubscribe(listener) }
+        pathfindingStepListener?.let { listener -> navigator.navigationNodeStepDispatcher.unsubscribe(listener) }
     }
 
     override fun endCondition(): Boolean {
@@ -64,8 +67,14 @@ class PursuitEntityAndAttackAIGoal(override var entity: Entity, override var pri
     var lastTargetLocation: Location? = null
     var tick: Int = 0
     override fun tick() {
+        entity.customNameVisible.value = true
+        if(entity.isDead) return
         tick++
         val target = targetUnit.invoke()
+
+        if(attackCooldown > 0) {
+            attackCooldown--
+        }
 
         if(target == null) {
             hasFinishedWalking = true
@@ -81,15 +90,23 @@ class PursuitEntityAndAttackAIGoal(override var entity: Entity, override var pri
         if(shouldPathfind) {
             lastTargetLocation = target.location
             navigator.updatePathfindingPath(target.location.subtract(0, 1, 0))
+            entity.customName.value = "<red>Pathfinding to ${target::class.simpleName}"
+        } else {
+            entity.customName.value = "<lime>Idle"
         }
 
-        if(target.location.distance(entity.location) < 0.3) {
+        if(target.location.distance(entity.location) <= 1.5) {
+            if(entity is Zombie) (entity as Zombie).raiseHands()
             attack(target)
+        } else {
+            if(entity is Zombie) (entity as Zombie).lowerHands()
         }
     }
 
-    fun attack(entity: Entity) {
+    fun attack(target: Entity) {
         if(attackCooldown != 0) return
-
+        attackCooldown = 20
+        target.damage(damage, DamageTypes.GENERIC, this.entity)
+        target.health.value -= damage
     }
 }

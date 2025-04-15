@@ -10,21 +10,23 @@ import io.github.dockyardmc.entity.EntityManager.despawnEntity
 import io.github.dockyardmc.entity.EntityManager.spawnEntity
 import io.github.dockyardmc.entity.Interaction
 import io.github.dockyardmc.entity.ItemDisplay
+import io.github.dockyardmc.events.EventPool
 import io.github.dockyardmc.extentions.properStrictCase
 import io.github.dockyardmc.location.Location
+import io.github.dockyardmc.maths.vectors.Vector3f
 import io.github.dockyardmc.particles.spawnParticle
+import io.github.dockyardmc.player.Direction
 import io.github.dockyardmc.player.Player
 import io.github.dockyardmc.registry.Blocks
 import io.github.dockyardmc.registry.Particles
 import io.github.dockyardmc.registry.Sounds
-import io.github.dockyardmc.runnables.ticks
-import io.github.dockyardmc.scheduler.runLaterAsync
+import io.github.dockyardmc.scheduler.SchedulerTask
+import io.github.dockyardmc.scheduler.runnables.ticks
 import io.github.dockyardmc.sounds.playSound
 import io.github.dockyardmc.utils.Disposable
-import io.github.dockyardmc.utils.vectors.Vector3f
 import kotlin.math.ceil
 
-class ShopItem(val location: Location, val item: GameItem, val instance: GameInstance): Disposable {
+class ShopItem(val location: Location, val item: GameItem, val instance: GameInstance) : Disposable {
 
     val world = instance.world
     val player = instance.player
@@ -32,22 +34,22 @@ class ShopItem(val location: Location, val item: GameItem, val instance: GameIns
     private var interaction: Interaction? = null
     private var hologram: Hologram? = null
     private val offsetSize = item.getDescription().size * 0.3
+    private val eventPool = EventPool()
+    private var floatingAnimationScheduler: SchedulerTask? = null
 
     val price = ceil(item.getShopPrice() * instance.shopPriceMultiplier).toInt()
 
     fun despawn() {
         despawnEntities()
         world.destroyNaturally(location)
+        floatingAnimationScheduler?.cancel()
     }
 
     private fun despawnEntities() {
         interaction?.responsive?.value = false
         itemDisplay?.let { entity -> world.despawnEntity(entity) }
         hologram?.let { entity -> world.despawnEntity(entity) }
-
-        runLaterAsync(5) {
-            interaction?.let { entity -> world.despawnEntity(entity) }
-        }
+        interaction?.let { entity -> world.despawnEntity(entity) }
     }
 
     fun spawn() {
@@ -67,6 +69,9 @@ class ShopItem(val location: Location, val item: GameItem, val instance: GameIns
             itemDisplay!!.item.value = item.getItemStack()
             itemDisplay!!.billboard.value = DisplayBillboard.CENTER
             itemDisplay!!.scaleTo(1.2f)
+            itemDisplay!!.transformInterpolation.value = 60
+            itemDisplay!!.translationInterpolation.value = 60
+//            itemDisplay!!.interpolationDelay.value = -1
 
             interaction = world.spawnEntity(Interaction(location)) as Interaction
             interaction!!.height.value = 5f
@@ -80,12 +85,30 @@ class ShopItem(val location: Location, val item: GameItem, val instance: GameIns
 
             world.players.forEach { player -> hologram!!.addViewer(player) }
 
-            interaction!!.rightClickDispatcher.register { _ ->
-                if(!interaction!!.responsive.value) return@register
+            interaction!!.rightClickDispatcher.subscribe { _ ->
+                if (!interaction!!.responsive.value) return@subscribe
 
-                if(purchase()) {
+                if (purchase()) {
                     interaction!!.responsive.value = false
                     instance.shop.shopItems.forEach { shopItem -> shopItem.updateHologram() }
+                }
+            }
+
+            world.scheduler.runLater(1.ticks) {
+                var dir = Direction.UP
+                var tick = -1
+                floatingAnimationScheduler = world.scheduler.runRepeating(1.ticks) {
+                    if (itemDisplay == null) return@runRepeating
+                    tick++
+                    if (tick % 60 != 0) return@runRepeating
+
+                    if (dir == Direction.UP) {
+                        dir = Direction.DOWN
+                        itemDisplay!!.translateTo(0f, 0.20f, 0f)
+                    } else {
+                        dir = Direction.UP
+                        itemDisplay!!.translateTo(0f, -0.20f, 0f)
+                    }
                 }
             }
         }
@@ -94,13 +117,13 @@ class ShopItem(val location: Location, val item: GameItem, val instance: GameIns
     fun purchase(): Boolean {
         val particleLocation = location.add(0.0, 2.5, 0.0)
 
-        if(instance.money.value < price) {
+        if (instance.money.value < price) {
             player.sendMessage("<red><bold>Shop <dark_gray>● <gray>You cannot afford this item! (${instance.money.value})")
             player.playSound(Sounds.ENTITY_VILLAGER_NO, 2f)
             return false
         }
 
-        if(instance.controller.getAmountOf(item) >= item.maxCopiesInInventory()) {
+        if (instance.controller.getAmountOf(item) >= item.maxCopiesInInventory() && item.maxCopiesInInventory() != -1) {
             player.sendMessage("<red><bold>Shop <dark_gray>● <gray>You have maximum of this item in your inventory!")
             player.playSound(Sounds.ENTITY_VILLAGER_NO, 2f)
             return false
@@ -126,17 +149,18 @@ class ShopItem(val location: Location, val item: GameItem, val instance: GameIns
     private fun getHologramLines(): MutableList<String> {
         val lines = mutableListOf<String>()
         lines.add("${item.getRarity().color}<b><u>${item.getName()}<r>")
-        lines.add("<#4f4f4f>[${item.getRarity().name.properStrictCase()}] [Owned ${instance.controller.getAmountOf(item)}/${item.maxCopiesInInventory()}]")
+        val owned = if (item.maxCopiesInInventory() == -1) "" else " [Owned ${instance.controller.getAmountOf(item)}/${item.maxCopiesInInventory()}]"
+        lines.add("<#7d7d7d>[${item.getRarity().name.properStrictCase()}]$owned")
         lines.add(" ")
 
         item.getDescription().forEach { line ->
             lines.add(line)
         }
         lines.add("")
-        if(instance.money.value < price) {
+        if (instance.money.value < price) {
             lines.add("${Colors.RED}▶ You don't have $${price} ◀")
         } else {
-            if(instance.controller.getAmountOf(item) >= item.maxCopiesInInventory()) {
+            if (instance.controller.getAmountOf(item) >= item.maxCopiesInInventory() && item.maxCopiesInInventory() != -1) {
                 lines.add("${Colors.RED}▶ You have maximum of this item ◀")
             } else {
                 lines.add("${Colors.LIME}▶ Buy for ${Colors.LIME_HIGHLIGHT}$$price${Colors.LIME} ◀")

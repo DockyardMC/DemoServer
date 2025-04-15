@@ -11,7 +11,7 @@ class BloodstainedSwordItem: GameItem() {
     }
 
     override fun getShopPrice(): Int {
-        return 5
+        return 10
     }
 
     override fun getItem(): Item {
@@ -27,11 +27,11 @@ class BloodstainedSwordItem: GameItem() {
     }
 
     override fun getDescription(): List<String> {
-        return listOf("<lime>+1 player damage<white> but <red>+1 monster speed")
+        return listOf("<lime>+1 player damage<white> but <red>+2.5% monster speed")
     }
 
     override fun onObtain(gameInstance: GameInstance) {
         gameInstance.playerDamage += 1
-        gameInstance.monsterSpeed -= 1
+        gameInstance.monsterSpeed.percentage += 2.5
     }
 }

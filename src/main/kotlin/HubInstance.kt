@@ -4,9 +4,10 @@ import cz.lukynka.shulkerbox.dockyard.DockyardMap
 import cz.lukynka.shulkerbox.dockyard.MapFileReader
 import cz.lukynka.shulkerbox.dockyard.conversion.toDockyardMap
 import io.github.dockyardmc.DockyardServer
-import io.github.dockyardmc.bossbar.Bossbar
-import io.github.dockyardmc.bossbar.BossbarColor
-import io.github.dockyardmc.bossbar.BossbarNotches
+import io.github.dockyardmc.apis.bossbar.Bossbar
+import io.github.dockyardmc.apis.bossbar.BossbarColor
+import io.github.dockyardmc.apis.bossbar.BossbarNotches
+import io.github.dockyardmc.apis.sidebar.Sidebar
 import io.github.dockyardmc.events.EventPool
 import io.github.dockyardmc.events.WorldTickEvent
 import io.github.dockyardmc.events.system.EventFilter
@@ -19,7 +20,6 @@ import io.github.dockyardmc.player.tablist
 import io.github.dockyardmc.registry.DimensionTypes
 import io.github.dockyardmc.registry.PotionEffects
 import io.github.dockyardmc.server.ServerMetrics
-import io.github.dockyardmc.sidebar.Sidebar
 import io.github.dockyardmc.world.World
 import io.github.dockyardmc.world.WorldManager
 import io.github.dockyardmc.world.generators.VoidWorldGenerator

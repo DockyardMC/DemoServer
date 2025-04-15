@@ -13,7 +13,8 @@ object ItemRegistry {
     init {
         add(AppleItem::class)
         add(SweepingEdgeItem::class)
-        add(RuneOfCrit::class)
+        add(RuneOfCritRate::class)
+        add(RuneOfCritDamage::class)
         add(HealthyStewItem::class)
 //        add(PikachusTailItem::class)
         add(TurtleShellItem::class)
