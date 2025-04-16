@@ -1,6 +1,7 @@
 package io.github.dockyard.demo
 
 import io.github.dockyard.demo.items.GameItem
+import io.github.dockyard.demo.monsters.Husk
 import io.github.dockyard.demo.monsters.Monster
 import io.github.dockyard.demo.monsters.Zombie
 import io.github.dockyardmc.entity.EntityManager.despawnEntity
@@ -41,7 +42,9 @@ class GameController(val instance: GameInstance) {
 
     fun spawnMonster() {
         val random = instance.center.getBlocksInRadius(10).filter { location -> location.y == instance.center.y }.random()
-        val zombie = instance.world.spawnEntity(Zombie(random, instance)) as Zombie
+
+        val monster = if(randomInt(1, 3) == 1) Zombie(random, instance) else Husk(random, instance)
+        instance.world.spawnEntity(monster)
     }
 
     fun startWave() {

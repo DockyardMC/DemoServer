@@ -41,4 +41,9 @@ class HealthyStewItem: GameItem() {
         gameInstance.player.playSound(Sounds.ENTITY_VILLAGER_TRADE)
         gameInstance.player.playSound(Sounds.ENTITY_GENERIC_DRINK)
     }
+
+    override fun onDiscarded(gameInstance: GameInstance) {
+        gameInstance.playerMaxHealth.value -= 2
+        gameInstance.player.health.value -= 2
+    }
 }

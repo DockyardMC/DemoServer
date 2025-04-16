@@ -1,14 +1,14 @@
 package io.github.dockyard.demo.monsters
 
 import de.metaphoriker.pathetic.api.pathing.result.PathfinderResult
+import io.github.dockyard.demo.utils.getFloorLocation
 import io.github.dockyardmc.entity.Entity
 import io.github.dockyardmc.entity.ai.AIGoal
-import io.github.dockyardmc.extentions.broadcastMessage
 import io.github.dockyardmc.location.Location
 import io.github.dockyardmc.pathfinding.Navigator
 import io.github.dockyardmc.registry.DamageTypes
 
-class PursuitEntityAndAttackAIGoal(override var entity: Entity, override var priority: Int, val targetUnit: () -> Entity?, val navigator: Navigator, val damage: Float): AIGoal() {
+class PursuitEntityAndAttackAIGoal(override var entity: Entity, override var priority: Int, val targetUnit: () -> Entity?, val navigator: Navigator, val damage: Float) : AIGoal() {
 
     companion object {
         const val ATTACK_COOLDOWN = 20
@@ -17,10 +17,10 @@ class PursuitEntityAndAttackAIGoal(override var entity: Entity, override var pri
         const val PATH_UPDATE_FAIL_THRESHOLD = 6
     }
 
-    var hasFinishedWalking = false
-    var attackCooldown = 0
-    var fails = 0
-    var updateFrequency = PATH_UPDATE_PERIOD_NORMAL
+    private var hasFinishedWalking = false
+    private var attackCooldown = 0
+    private var fails = 0
+    private var updateFrequency = PATH_UPDATE_PERIOD_NORMAL
 
     override fun startCondition(): Boolean {
         return targetUnit.invoke() != null
@@ -34,14 +34,14 @@ class PursuitEntityAndAttackAIGoal(override var entity: Entity, override var pri
         hasFinishedWalking = false
 
         pathfindResultListener = navigator.pathfindResultDispatcher.subscribe { result ->
-            if(result.hasFailed()) {
+            if (result.hasFailed()) {
                 navigator.cancelNavigating()
                 fails++
-                if(fails >= PATH_UPDATE_FAIL_THRESHOLD) {
+                if (fails >= PATH_UPDATE_FAIL_THRESHOLD) {
                     updateFrequency = PATH_UPDATE_PERIOD_IDLE
                 }
             } else {
-                if(updateFrequency != PATH_UPDATE_PERIOD_NORMAL) {
+                if (updateFrequency != PATH_UPDATE_PERIOD_NORMAL) {
                     updateFrequency = PATH_UPDATE_PERIOD_NORMAL
                     fails = 0
                 }
@@ -64,48 +64,47 @@ class PursuitEntityAndAttackAIGoal(override var entity: Entity, override var pri
         return hasFinishedWalking
     }
 
-    var lastTargetLocation: Location? = null
-    var tick: Int = 0
+    private var lastTargetLocation: Location? = null
+    private var tick: Int = 0
     override fun tick() {
         entity.customNameVisible.value = true
-        if(entity.isDead) return
+        if (entity.isDead) return
         tick++
         val target = targetUnit.invoke()
 
-        if(attackCooldown > 0) {
+        if (attackCooldown > 0) {
             attackCooldown--
         }
 
-        if(target == null) {
+        if (target == null) {
             hasFinishedWalking = true
             return
         }
 
         var shouldPathfind = false
-        if(entity.isDead) shouldPathfind = false
-        if(lastTargetLocation == null) shouldPathfind = true
-        if(lastTargetLocation != null && lastTargetLocation!!.distance(target.location) > 1.0) shouldPathfind = true
-        if(tick % updateFrequency != 0) shouldPathfind = false
+        if (entity.isDead) shouldPathfind = false
+        if (lastTargetLocation == null) shouldPathfind = true
+        if (lastTargetLocation != null && lastTargetLocation!!.distance(target.location) > 1.0) shouldPathfind = true
+        if (tick % updateFrequency != 0) shouldPathfind = false
+        if (target.getFloorLocation() == null) shouldPathfind = false
 
-        if(shouldPathfind) {
+        if (shouldPathfind) {
             lastTargetLocation = target.location
-            navigator.updatePathfindingPath(target.location.subtract(0, 1, 0))
-            entity.customName.value = "<red>Pathfinding to ${target::class.simpleName}"
-        } else {
-            entity.customName.value = "<lime>Idle"
+            navigator.updatePathfindingPath(target.getFloorLocation()!!.second)
         }
 
-        if(target.location.distance(entity.location) <= 1.5) {
-            if(entity is Zombie) (entity as Zombie).raiseHands()
+        if (target.location.distance(entity.location) <= 1.5) {
+            if (entity is Zombie) (entity as Zombie).raiseHands()
             attack(target)
         } else {
-            if(entity is Zombie) (entity as Zombie).lowerHands()
+            if (entity is Zombie) (entity as Zombie).lowerHands()
+            if (entity is Husk) (entity as Husk).lowerHands()
         }
     }
 
-    fun attack(target: Entity) {
-        if(attackCooldown != 0) return
-        attackCooldown = 20
+    private fun attack(target: Entity) {
+        if (attackCooldown != 0) return
+        attackCooldown = ATTACK_COOLDOWN
         target.damage(damage, DamageTypes.GENERIC, this.entity)
         target.health.value -= damage
     }

@@ -31,6 +31,11 @@ class RuneOfCritDamage : GameItem() {
         gameInstance.playerCritRate.percentage -= 3
     }
 
+    override fun onDiscarded(gameInstance: GameInstance) {
+        gameInstance.playerCritDamage.percentage -= 3
+        gameInstance.playerCritRate.percentage += 3
+    }
+
     override fun getDescription(): List<String> {
         return listOf("Crit Damage <lime>+3%<white> but Crit Rate <red>-3%")
     }

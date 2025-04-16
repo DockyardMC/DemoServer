@@ -21,13 +21,14 @@ import io.github.dockyardmc.registry.Attributes
 import io.github.dockyardmc.registry.DimensionTypes
 import io.github.dockyardmc.registry.Items
 import io.github.dockyardmc.registry.PotionEffects
+import io.github.dockyardmc.utils.Disposable
 import io.github.dockyardmc.world.World
 import io.github.dockyardmc.world.WorldManager
 import io.github.dockyardmc.world.generators.VoidWorldGenerator
 import java.io.File
 import java.util.*
 
-class GameInstance(val player: Player) {
+class GameInstance(val player: Player): Disposable {
 
     companion object {
         val sword = ItemStack(Items.WOODEN_SWORD).withDisplayName("<white><u>Basic Sword").withLore(" ", "<gray>Kill em all", "<white><bold>STARTER ITEM")
@@ -195,5 +196,9 @@ class GameInstance(val player: Player) {
         SHOP_ACTIVE,
         GAME_PLAY,
         GAME_OVER
+    }
+
+    override fun dispose() {
+
     }
 }

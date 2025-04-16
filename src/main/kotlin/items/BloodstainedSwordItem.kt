@@ -34,4 +34,9 @@ class BloodstainedSwordItem: GameItem() {
         gameInstance.playerDamage += 1
         gameInstance.monsterSpeed.percentage += 2.5
     }
+
+    override fun onDiscarded(gameInstance: GameInstance) {
+        gameInstance.playerDamage -= 1
+        gameInstance.monsterSpeed.percentage -= 2.5
+    }
 }

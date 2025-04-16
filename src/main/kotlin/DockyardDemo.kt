@@ -1,6 +1,7 @@
 package io.github.dockyard.demo
 
 import cz.lukynka.shulkerbox.dockyard.ShulkerboxIntegration
+import io.github.dockyard.demo.items.ItemRegistry
 import io.github.dockyardmc.DockyardServer
 import io.github.dockyardmc.events.Events
 import io.github.dockyardmc.events.PlayerJoinEvent
@@ -50,6 +51,7 @@ object DockyardDemo {
                 player.permissions.add("dockyard.admin")
                 player.permissions.add("dockyard.*")
                 player.permissions.add("demo.admin")
+                player.permissions.add("dd.admin")
             }
             runLaterAsync(2) {
                 HubInstance.join(player)
@@ -57,6 +59,8 @@ object DockyardDemo {
         }
 
         server.start()
+
+        ItemRegistry
     }
 }
 

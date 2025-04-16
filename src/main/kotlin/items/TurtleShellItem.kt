@@ -34,4 +34,9 @@ class TurtleShellItem: GameItem() {
         gameInstance.monsterSpeed.percentage += 5
         gameInstance.playerDodge.percentage += 5
     }
+
+    override fun onDiscarded(gameInstance: GameInstance) {
+        gameInstance.monsterSpeed.percentage -= 5
+        gameInstance.playerDodge.percentage -= 5
+    }
 }

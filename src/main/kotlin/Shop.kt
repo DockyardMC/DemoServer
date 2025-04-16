@@ -25,7 +25,7 @@ class Shop(val instance: GameInstance) {
 
         val items = mutableListOf<GameItem>()
         for (i in 0 until 3) {
-            items.add(ItemRegistry.items.random().primaryConstructor!!.call())
+            items.add(ItemRegistry.items.values.random().primaryConstructor!!.call())
         }
 
         spawnContinueButton()

@@ -58,7 +58,7 @@ class SuperchardgedItem : GameItem() {
                     && !entity.isDead
         }
 
-        nearEntities.forEach { entity ->
+        nearEntities.take(6).forEach { entity ->
             val damage = percentOf(30f, (entity as Monster).maxHealth.toDouble()).toFloat() / 100f
             entity.damage(damage, DamageTypes.GENERIC, null)
         }

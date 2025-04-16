@@ -17,7 +17,7 @@ import io.github.dockyardmc.sounds.playSound
 class SweepingEdgeItem : GameItem() {
 
     override fun maxCopiesInInventory(): Int {
-        return 2
+        return 1
     }
 
     override fun getShopPrice(): Int {
@@ -46,7 +46,7 @@ class SweepingEdgeItem : GameItem() {
             && entity != monster
         }
 
-        nearEntities.forEach { entity ->
+        nearEntities.take(5).forEach { entity ->
             entity.damage(Percentage(35.0).getValueOf(damage), DamageTypes.GENERIC, null)
         }
 
